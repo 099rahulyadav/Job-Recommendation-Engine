@@ -17,6 +17,8 @@ const isStringArray = (value: unknown): value is string[] =>
 function candidateError(body: unknown): string | null {
   if (!body || typeof body !== "object") return "Request body must be an object";
   const value = body as Record<string, unknown>;
+  if (value.id !== undefined && (typeof value.id !== "string" || !value.id.trim()))
+    return "id must be a non-empty string when provided";
   if (typeof value.name !== "string" || !value.name.trim()) return "name is required";
   if (!isStringArray(value.skills)) return "skills must be an array of non-empty strings";
   if (typeof value.yearsOfExperience !== "number" || value.yearsOfExperience < 0)
@@ -40,6 +42,8 @@ function isSkillRequirement(value: unknown): value is SkillRequirement {
 function jobError(body: unknown): string | null {
   if (!body || typeof body !== "object") return "Request body must be an object";
   const value = body as Record<string, unknown>;
+  if (value.id !== undefined && (typeof value.id !== "string" || !value.id.trim()))
+    return "id must be a non-empty string when provided";
   if (typeof value.title !== "string" || !value.title.trim()) return "title is required";
   if (!Array.isArray(value.requiredSkills) || !value.requiredSkills.every(isSkillRequirement))
     return "requiredSkills must contain valid name/type objects";

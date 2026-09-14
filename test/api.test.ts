@@ -72,4 +72,22 @@ describe("API", () => {
     expect(badLimit.statusCode).toBe(400);
     expect(badWeights.statusCode).toBe(400);
   });
+
+  it("rejects a non-string client-supplied id instead of returning a server error", async () => {
+    const app = buildApp();
+    apps.push(app);
+    const response = await app.inject({
+      method: "POST",
+      url: "/candidates",
+      payload: {
+        id: 123,
+        name: "Asha",
+        skills: [],
+        yearsOfExperience: 0,
+        location: "Pune",
+        expectedSalary: 0,
+      },
+    });
+    expect(response.statusCode).toBe(400);
+  });
 });

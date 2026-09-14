@@ -115,11 +115,17 @@ export function scoreMatch(
   };
 
   return {
-    score: round(
-      breakdown.skills.score +
-        breakdown.experience.score +
-        breakdown.location.score +
-        breakdown.salary.score,
+    score: Math.min(
+      100,
+      Math.max(
+        0,
+        round(
+          breakdown.skills.score +
+            breakdown.experience.score +
+            breakdown.location.score +
+            breakdown.salary.score,
+        ),
+      ),
     ),
     breakdown,
     item: job,
