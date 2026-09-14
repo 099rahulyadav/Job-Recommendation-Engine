@@ -46,6 +46,17 @@ docker compose up --build
 
 This starts the API at `http://localhost:3000`. Postgres is not included because this submission deliberately uses an in-memory repository; adding a database container without actually using it would create false complexity. Data resets whenever the process restarts.
 
+## Deploy on Vercel
+
+The `api/index.ts` serverless adapter exposes the same Fastify application on Vercel, while `src/server.ts` remains the local and Docker entry point.
+
+```bash
+vercel
+vercel --prod
+```
+
+The repository is intentionally in-memory. On Vercel, records are scoped to a warm function instance and may disappear or differ between instances. Use a persistent database before treating the deployment as production storage.
+
 ## API
 
 ### Create a candidate
