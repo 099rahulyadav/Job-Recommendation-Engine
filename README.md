@@ -50,6 +50,8 @@ This starts the API at `http://localhost:3000`. Postgres is not included because
 
 The `api/index.ts` serverless adapter exposes the same Fastify application on Vercel, while `src/server.ts` remains the local and Docker entry point.
 
+Production API: `https://job-recommendation-engine-self.vercel.app`
+
 ```bash
 vercel
 vercel --prod

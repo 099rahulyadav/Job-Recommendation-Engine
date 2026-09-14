@@ -4,6 +4,12 @@
 
 The Job Match API creates candidate and job records and returns explainable, rule-based recommendations. Data is stored in memory and is lost whenever the API process restarts.
 
+Production base URL:
+
+```text
+https://job-recommendation-engine-self.vercel.app
+```
+
 Base URL when running locally:
 
 ```text

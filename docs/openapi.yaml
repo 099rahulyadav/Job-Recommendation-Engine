@@ -6,6 +6,8 @@ info:
     Transparent, rule-based job recommendations with explainable scoring.
     Records are stored in memory and reset when the process restarts.
 servers:
+  - url: https://job-recommendation-engine-self.vercel.app
+    description: Production deployment
   - url: http://localhost:3000
     description: Local development server
 tags:
