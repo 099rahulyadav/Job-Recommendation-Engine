@@ -2,6 +2,8 @@
 
 A small, explainable rule-based API that ranks jobs for candidates (and candidates for jobs). It is intentionally not machine learning: every point in a result is traceable to a business rule.
 
+API references: [human-readable documentation](docs/API.md) | [OpenAPI 3.1 specification](docs/openapi.yaml)
+
 ## Features
 
 - Create candidate profiles and job postings

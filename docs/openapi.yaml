@@ -1,0 +1,395 @@
+openapi: 3.1.0
+info:
+  title: Job Match API
+  version: 1.0.0
+  description: >-
+    Transparent, rule-based job recommendations with explainable scoring.
+    Records are stored in memory and reset when the process restarts.
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+tags:
+  - name: System
+  - name: Candidates
+  - name: Jobs
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Check API health
+      operationId: getHealth
+      responses:
+        "200":
+          description: API is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /candidates:
+    post:
+      tags: [Candidates]
+      summary: Create a candidate profile
+      operationId: createCandidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateInput"
+            example:
+              name: Asha Sharma
+              skills: [TypeScript, Node.js, SQL]
+              yearsOfExperience: 3
+              location: Bengaluru
+              expectedSalary: 1500000
+      responses:
+        "201":
+          description: Candidate created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /jobs:
+    post:
+      tags: [Jobs]
+      summary: Create a job posting
+      operationId: createJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+            example:
+              title: Backend Engineer
+              requiredSkills:
+                - name: TypeScript
+                  type: must-have
+                - name: Docker
+                  type: nice-to-have
+              minYearsExperience: 4
+              location: Bengaluru
+              salaryRange:
+                min: 1500000
+                max: 2000000
+              remoteAllowed: false
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /candidates/{id}/recommendations:
+    get:
+      tags: [Candidates]
+      summary: Recommend jobs for a candidate
+      description: >-
+        Returns eligible jobs in descending score order. Jobs whose must-have
+        skills are not all present are excluded. If any custom weight is used,
+        all four custom weights must be supplied.
+      operationId: recommendJobsForCandidate
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/SkillsWeight"
+        - $ref: "#/components/parameters/ExperienceWeight"
+        - $ref: "#/components/parameters/LocationWeight"
+        - $ref: "#/components/parameters/SalaryWeight"
+      responses:
+        "200":
+          description: Ranked job recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobRecommendationsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Candidate not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: Candidate not found
+  /jobs/{id}/recommendations:
+    get:
+      tags: [Jobs]
+      summary: Recommend candidates for a job
+      description: >-
+        Bonus reverse view using the same score and must-have filter. If any
+        custom weight is used, all four custom weights must be supplied.
+      operationId: recommendCandidatesForJob
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/SkillsWeight"
+        - $ref: "#/components/parameters/ExperienceWeight"
+        - $ref: "#/components/parameters/LocationWeight"
+        - $ref: "#/components/parameters/SalaryWeight"
+      responses:
+        "200":
+          description: Ranked candidate recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateRecommendationsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: Job not found
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: Candidate or job identifier
+      schema:
+        type: string
+        minLength: 1
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of results
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    SkillsWeight:
+      name: skillsWeight
+      in: query
+      required: false
+      description: Non-negative skills weight; provide all four weights when overriding defaults
+      schema:
+        type: number
+        minimum: 0
+    ExperienceWeight:
+      name: experienceWeight
+      in: query
+      required: false
+      description: Non-negative experience weight; provide all four weights when overriding defaults
+      schema:
+        type: number
+        minimum: 0
+    LocationWeight:
+      name: locationWeight
+      in: query
+      required: false
+      description: Non-negative location weight; provide all four weights when overriding defaults
+      schema:
+        type: number
+        minimum: 0
+    SalaryWeight:
+      name: salaryWeight
+      in: query
+      required: false
+      description: Non-negative salary weight; provide all four weights when overriding defaults
+      schema:
+        type: number
+        minimum: 0
+  responses:
+    BadRequest:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: Request validation failed
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    CandidateInput:
+      type: object
+      required: [name, skills, yearsOfExperience, location, expectedSalary]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: Optional client ID; a UUID is generated when omitted
+        name:
+          type: string
+          minLength: 1
+        skills:
+          type: array
+          items:
+            type: string
+            minLength: 1
+        yearsOfExperience:
+          type: number
+          minimum: 0
+        location:
+          type: string
+          minLength: 1
+        expectedSalary:
+          type: number
+          minimum: 0
+    Candidate:
+      allOf:
+        - $ref: "#/components/schemas/CandidateInput"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              minLength: 1
+    SkillRequirement:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum: [must-have, nice-to-have]
+    SalaryRange:
+      type: object
+      required: [min, max]
+      properties:
+        min:
+          type: number
+          minimum: 0
+        max:
+          type: number
+          minimum: 0
+          description: Must be greater than or equal to min
+    JobInput:
+      type: object
+      required:
+        - title
+        - requiredSkills
+        - minYearsExperience
+        - location
+        - salaryRange
+        - remoteAllowed
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: Optional client ID; a UUID is generated when omitted
+        title:
+          type: string
+          minLength: 1
+        requiredSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkillRequirement"
+        minYearsExperience:
+          type: number
+          minimum: 0
+        location:
+          type: string
+          minLength: 1
+        salaryRange:
+          $ref: "#/components/schemas/SalaryRange"
+        remoteAllowed:
+          type: boolean
+    Job:
+      allOf:
+        - $ref: "#/components/schemas/JobInput"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              minLength: 1
+    BreakdownItem:
+      type: object
+      required: [score, max, detail]
+      properties:
+        score:
+          type: number
+          minimum: 0
+        max:
+          type: number
+          minimum: 0
+        detail:
+          type: string
+    ScoreBreakdown:
+      type: object
+      required: [skills, experience, location, salary]
+      properties:
+        skills:
+          $ref: "#/components/schemas/BreakdownItem"
+        experience:
+          $ref: "#/components/schemas/BreakdownItem"
+        location:
+          $ref: "#/components/schemas/BreakdownItem"
+        salary:
+          $ref: "#/components/schemas/BreakdownItem"
+    JobRecommendation:
+      type: object
+      required: [score, breakdown, item]
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        breakdown:
+          $ref: "#/components/schemas/ScoreBreakdown"
+        item:
+          $ref: "#/components/schemas/Job"
+    CandidateRecommendation:
+      type: object
+      required: [score, breakdown, item]
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        breakdown:
+          $ref: "#/components/schemas/ScoreBreakdown"
+        item:
+          $ref: "#/components/schemas/Candidate"
+    JobRecommendationsResponse:
+      type: object
+      required: [candidateId, count, recommendations]
+      properties:
+        candidateId:
+          type: string
+        count:
+          type: integer
+          minimum: 0
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/JobRecommendation"
+    CandidateRecommendationsResponse:
+      type: object
+      required: [jobId, count, recommendations]
+      properties:
+        jobId:
+          type: string
+        count:
+          type: integer
+          minimum: 0
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateRecommendation"
